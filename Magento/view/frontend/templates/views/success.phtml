@@ -1,0 +1,41 @@
+<?php
+
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$helper = $this->helper('Dipi\Magento\Helper\Data');
+
+$enabled = $helper->getConfigValue('dipi_configuration/general/enabled') ?? false;
+$token = $helper->getConfigValue('dipi_configuration/general/token') ?? false;
+$brandId = $helper->getConfigValue('dipi_configuration/general/brand_id') ?? false;
+$orderId = $this->getOrderId();
+
+if ($enabled && $orderId && $brandId && $token) {
+    // Fix for Cloudflare
+    if ( isset( $_SERVER["HTTP_CF_CONNECTING_IP"] ) ) {
+        $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+    }
+
+    $order = $objectManager->create('Magento\Sales\Model\Order')->loadByIncrementId($orderId);
+
+    $data = array(
+        'token' => $token,
+        'reference' => $orderId,
+        'amount' => $order->getGrandTotal(),
+        'currency' => $order->getOrderCurrencyCode(),
+        'discount_code' => $order->getCouponCode(),
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'],
+        'ip_address' => $_SERVER['REMOTE_ADDR'],
+        'cookie' => isset($_COOKIE['dp_' . $brandId]) ? $_COOKIE['dp_' . $brandId] : null,
+        'new_customer' => ($order->getCustomerId() > 0 ? 1 : 0),
+    );
+    
+    $ch = curl_init('https://dipi.io/t/s2s/sale/' . $brandId);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false); // Do not return the response
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_exec($ch);
+
+    if (curl_errno($ch)) {
+        $this->_logger->error('cURL error: ' . curl_error($ch));
+    }
+
+    curl_close($ch);
+}

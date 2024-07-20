@@ -1,0 +1,11 @@
+{
+    "name": "dipi-io/dipi-magento",
+    "description": "Connect Dipi to Magento 2",
+    "authors": [
+        {
+            "name": "Dipi AB",
+            "email": "tech@dipi.io"
+        }
+    ],
+    "require": {}
+}

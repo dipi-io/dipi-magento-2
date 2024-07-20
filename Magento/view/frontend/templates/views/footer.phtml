@@ -1,0 +1,38 @@
+<?php
+
+$helper = $this->helper('Dipi\Magento\Helper\Data');
+
+$enabled = $helper->getConfigValue('dipi_configuration/general/enabled') ?? false;
+$token = $helper->getConfigValue('dipi_configuration/general/token') ?? false;
+$brandId = $helper->getConfigValue('dipi_configuration/general/brand_id') ?? false;
+$dipi = isset($_GET['dipi']) ? $_GET['dipi'] : false;
+
+if ($enabled && $brandId && $token && $dipi) {
+    // Fix for Cloudflare
+    if (isset($_SERVER["HTTP_CF_CONNECTING_IP"])) {
+        $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+    }
+
+    if (!isset($_COOKIE['dp_' . $brandId])) {
+        setcookie('dp_' . $brandId, md5(uniqid()), time() + (86400 * 30), '/');
+    }
+
+    $data = array(
+        'token' => $token,
+        'dipi' => $dipi,
+        'ip_address' => $_SERVER['REMOTE_ADDR'],
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'],
+        'cookie' => isset($_COOKIE['dp_' . $brandId]) ? $_COOKIE['dp_' . $brandId] : null,
+    );
+    
+    $ch = curl_init('https://dipi.io/t/s2s/click/' . $brandId);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false); // Do not return the response
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_exec($ch);
+
+    if (curl_errno($ch)) {
+        $this->_logger->error('cURL error: ' . curl_error($ch));
+    }
+
+    curl_close($ch);
+}

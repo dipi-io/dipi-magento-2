@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="order.success.additional.info">
+            <block class="Magento\Checkout\Block\Onepage\Success" name="dipi.order.success" template="Dipi_Magento::views/success.phtml" after="-"></block>
+        </referenceContainer>
+        <referenceContainer name="footer-container">
+            <block class="Magento\Theme\Block\Html\Footer" name="dipi.footer" template="Dipi_Magento::views/footer.phtml"/>
+        </referenceContainer>
+    </body>
+</page>
